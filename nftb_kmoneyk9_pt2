@@ -1,0 +1,159 @@
+-- Key System GUI (runs before anything else)
+local function showKeyGuiAndWait()
+    -- Instant access HWID (only this value will bypass the key GUI)
+    local ALLOWED_HWIDS = {
+        "91e313b933b3a1052fca3a1fabbda03fdfb368fa7c24686d83a884db447efd81",
+        "20E746A0F1BB1463BD376D3BF01BE1",
+        "0aaaa1b9d2a1a76db91f32ddfc76bb929a3810c53c0a26742d4ce2ca6da5ca79"
+    }
+
+    -- Collect HWID candidates from common exploit APIs and Roblox client ID.
+    local function collect_hwids()
+        local list, seen, ok, res = {}, {}, nil, nil
+        local function push(v)
+            if v and v ~= "" then
+                v = tostring(v)
+                if not seen[v] then
+                    list[#list + 1] = v
+                    seen[v] = true
+                end
+            end
+        end
+
+        if pcall(function() return _G and _G.hwid end) and _G and _G.hwid then push(_G.hwid) end
+        if pcall(function() return _G and _G.HWID end) and _G and _G.HWID then push(_G.HWID) end
+        if pcall(function() return shared and shared.HWID end) and shared and shared.HWID then push(shared.HWID) end
+        if pcall(function() return getgenv and getgenv().HWID end) and getgenv and getgenv().HWID then push(getgenv().HWID) end
+        if pcall(function() return getgenv and getgenv().hwid end) and getgenv and getgenv().hwid then push(getgenv().hwid) end
+
+        if pcall(function() return gethwid ~= nil end) and type(gethwid) == "function" then
+            ok, res = pcall(gethwid)
+            if ok then push(res) end
+        end
+
+        if pcall(function() return syn and syn.get_hwid end) and syn and syn.get_hwid then
+            ok, res = pcall(syn.get_hwid)
+            if ok then push(res) end
+        end
+
+        if pcall(function() return identifyexecutor ~= nil end) and type(identifyexecutor) == "function" then
+            -- Some executors expose a second return as HWID; ignore errors.
+            ok, res = pcall(identifyexecutor)
+            if ok and type(res) == "table" and res[2] then push(res[2]) end
+        end
+
+        ok, res = pcall(function()
+            return game:GetService("RbxAnalyticsService"):GetClientId()
+        end)
+        if ok then push(res) end
+
+        return list
+    end
+
+    for _, hwid in ipairs(collect_hwids()) do
+        for _, allowed in ipairs(ALLOWED_HWIDS) do
+            if hwid == allowed then
+                warn("HWID LUCKY FAG")
+                return true
+            end
+        end
+    end
+    local KEY = "" -- Change this to your desired key
+    local accessGranted = false
+    local finished = false
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "HeadsetsDisconnectedDialog"
+    screenGui.Parent = game:GetService("CoreGui")
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 300, 0, 150)
+    frame.Position = UDim2.new(0.5, -150, 0.5, -75)
+    frame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    frame.BorderSizePixel = 0
+    frame.Parent = screenGui
+
+    local uiStroke = Instance.new("UIStroke")
+    uiStroke.Color = Color3.fromRGB(0, 0, 255)
+    uiStroke.Thickness = 3
+    uiStroke.Parent = frame
+
+    spawn(function()
+        local t = 0
+        while frame.Parent do
+            t = t + 0.05
+            local alpha = (math.sin(t * 2) + 1) / 2
+            uiStroke.Transparency = 0.05 + 0.45 * (1 - alpha)
+            wait(0.03)
+        end
+    end)
+
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 18)
+    uiCorner.Parent = frame
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 40)
+    title.BackgroundTransparency = 1
+    title.Text = "Swags key System"
+    title.Font = Enum.Font.GothamBlack
+    title.TextSize = 25
+    title.TextColor3 = Color3.fromRGB(0, 0, 255)
+    title.TextStrokeTransparency = 1
+    title.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    title.Parent = frame
+    title.ZIndex = 2
+
+    local subtitle = Instance.new("TextLabel")
+    subtitle.Size = UDim2.new(1, 0, 0, 20)
+    subtitle.Position = UDim2.new(0, 0, 0, 32)
+    subtitle.BackgroundTransparency = 1
+    subtitle.Text = "discord.gg/WNDbAxBdTk"
+    subtitle.Font = Enum.Font.GothamSemibold
+    subtitle.TextSize = 15
+    subtitle.TextColor3 = Color3.fromRGB(0, 0, 255)
+    subtitle.TextStrokeTransparency = 1
+    subtitle.Parent = frame
+    subtitle.ZIndex = 2
+
+    local textBox = Instance.new("TextBox")
+    textBox.Size = UDim2.new(0.8, 0, 0, 30)
+    textBox.Position = UDim2.new(0.1, 0, 0.4, 0)
+    textBox.PlaceholderText = "🤑"
+    textBox.Font = Enum.Font.Gotham
+    textBox.TextSize = 18
+    textBox.Text = ""
+    textBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textBox.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
+    textBox.BorderSizePixel = 0
+    textBox.Parent = frame
+    local tbCorner = Instance.new("UICorner")
+    tbCorner.CornerRadius = UDim.new(0, 10)
+    tbCorner.Parent = textBox
+    textBox.TextWrapped = true
+    textBox.ZIndex = 2
+
+
+    button.MouseButton1Click:Connect(function()
+        if textBox.Text == KEY then
+            textBox.TextColor3 = Color3.fromRGB(0,0,255)
+            textBox.Text = "Access Granted😎"
+            wait(0.3)
+            screenGui:Destroy()
+            accessGranted = true
+            finished = true
+        else
+            textBox.TextColor3 = Color3.fromRGB(255,255,255)
+            textBox.Text = "Wrong Key😂🙏"
+        end
+    end)
+
+    -- Wait until access is granted
+    repeat wait() until finished
+    return accessGranted
+end
+
+if not showKeyGuiAndWait() then
+    return
+end
